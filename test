@@ -1,0 +1,19 @@
+             if i % 2 == 0 and j % 2 == 0:  # dots
+                 Label(self.playboard, height=30, width=30, image=self.dot_img, borderwidth=0, background="white").grid(row=i,
+                                                                                                              column=j)
+             elif i % 2 == 0 and j % 2 != 0:  # line x
+                 line_x_btn = Button(self.playboard, text=str((i,j)), relief=SUNKEN, borderwidth=0, background="white",
+                                     command=lambda x=i, y=j: self.makeLineX(x, y))
+                 self.lineX_list.append(Line(i,j,line_x_btn,"x",False))
+                 line_x_btn.grid(row=i, column=j)
+
+
+             elif i % 2 != 0 and j % 2 == 0:  # line y
+                 line_y_btn = Button(self.playboard, text=str((i,j)), relief=SUNKEN, borderwidth=0, background="white",
+                                     command=lambda x=i, y=j: self.makeLineY(x, y))
+                 self.lineY_list.append(Line(i, j, line_y_btn, "y", False))
+                 line_y_btn.grid(row=i, column=j)
+             elif i % 2 != 0 and j % 2 != 0:  # box
+                 label = Label(self.playboard,text=str((i,j)), borderwidth=0, background="white")
+                 self.box_list.append(Box(i,j,label,False))
+                 label.grid(row=i,column=j)
