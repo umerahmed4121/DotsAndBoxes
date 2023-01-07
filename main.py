@@ -247,5 +247,6 @@ class Game:
                     return
 
 
-Game()
+print(Game())
+
 
