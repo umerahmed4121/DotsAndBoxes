@@ -248,5 +248,5 @@ class Game:
 
 
 print(Game())
-
+print("hi")
 
