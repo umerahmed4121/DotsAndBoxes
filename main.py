@@ -3,6 +3,10 @@ from tkinter import *
 from tkinter import messagebox
 
 
+
+
+
+
 class Player:
     def __init__(self, name, score=0):
         self.name = name
@@ -33,12 +37,13 @@ class Game:
 
     def __init__(self,gridSize=8):
         self.GRID_SIZE = gridSize
-        self.COLOUR_HEADER_BG = "#FF7C10"
+        self.COLOUR_HEADER_BG = "#D190FF"
         self.COLOUR_TURN_ACTIVE = "#3FFF00"
         self.COLOUR_TURN_INACTIVE = "#FFF200"
 
         self.root = Tk()
         self.root.title('Dots and Boxes')
+        self.root.configure(background="white")
         self.start_game()
 
     def start_game(self):
@@ -57,18 +62,18 @@ class Game:
 
     def set_header(self):
 
-        self.header = Frame(self.root, background=self.COLOUR_HEADER_BG)
+        self.header = Frame(self.root, background=self.COLOUR_HEADER_BG,padx=20)
         self.header.grid(row=0)
 
-        self.options = Frame(self.header, background=self.COLOUR_HEADER_BG, pady=10)
-        self.turn_label = Label(self.options, text=f"{self.turn}'s turn", foreground="#3FFF00", font=("Arial", 12),
+        self.options = Frame(self.header, background=self.COLOUR_HEADER_BG, pady=20)
+        self.turn_label = Label(self.options, text=f"{self.turn}'s turn", foreground="white", font=("Cooper Black", 15),
                                 background=self.COLOUR_HEADER_BG)
-        self.turn_label.pack(side=LEFT)
+        self.turn_label.pack(anchor=N)
         self.restart_img = PhotoImage(file="images/restart.png")
         Button(self.options, image=self.restart_img, relief=SUNKEN, borderwidth=0, background=self.COLOUR_HEADER_BG,
-               command=self.start_game).pack(side=RIGHT)
+               command=self.start_game).pack(anchor=S)
         self.options.grid(row=0, ipadx=240)
-        self.score_line = Frame(self.header, background=self.COLOUR_HEADER_BG)
+        self.score_line = Frame(self.header, background=self.COLOUR_HEADER_BG,pady=10)
         self.score_line.grid(row=1, ipadx=100)
         self.user_img = PhotoImage(file='images/user.png')
         self.bot_img = PhotoImage(file='images/bot.png')
@@ -102,7 +107,7 @@ class Game:
         # self.test_button = Button(self.root,text="Play AI",command=self.play_bot)
         # self.test_button.grid(row=2,column=1)
 
-        self.playboard = Frame(self.root, pady=10, padx=10, background="white", borderwidth=10)
+        self.playboard = Frame(self.root, pady=20, padx=10, background="white", borderwidth=10)
         self.playboard.grid(row=1)
 
         self.line_x_img = PhotoImage(file='images/line_x.png')
@@ -118,7 +123,7 @@ class Game:
                     Label(self.playboard, image=self.dot_img, borderwidth=0, background="white").grid(row=i,
                                                                                                     column=j)
                 elif i % 2 == 0 and j % 2 != 0:  # line x
-                    line_x_btn = Button(self.playboard, text="X"+str((i,j)), relief=SUNKEN, borderwidth=0,
+                    line_x_btn = Button(self.playboard, image=self.blank_img, relief=SUNKEN, borderwidth=0,
                                         background="white",
                                         command=lambda x=i, y=j: self.makeLineX(x, y))
                     self.lineX_list.append(Line(i, j, line_x_btn, "x", False))
@@ -127,7 +132,7 @@ class Game:
 
 
                 elif i % 2 != 0 and j % 2 == 0:  # line y
-                    line_y_btn = Button(self.playboard, text="Y"+str((i,j)), relief=SUNKEN, borderwidth=0,
+                    line_y_btn = Button(self.playboard, image=self.blank_img, relief=SUNKEN, borderwidth=0,
                                         background="white",
                                         command=lambda x=i, y=j: self.makeLineY(x, y))
                     self.lineY_list.append(Line(i, j, line_y_btn, "y", False))
@@ -463,5 +468,5 @@ class Game:
 
 
 
-Game(2)
+Game()
 
