@@ -1,5 +1,6 @@
 import random
 from tkinter import *
+from tkinter import messagebox
 
 
 class Player:
@@ -30,7 +31,8 @@ class Box:
 
 class Game:
 
-    def __init__(self):
+    def __init__(self,gridSize=8):
+        self.GRID_SIZE = gridSize
         self.COLOUR_HEADER_BG = "#FF7C10"
         self.COLOUR_TURN_ACTIVE = "#3FFF00"
         self.COLOUR_TURN_INACTIVE = "#FFF200"
@@ -57,6 +59,7 @@ class Game:
 
         self.header = Frame(self.root, background=self.COLOUR_HEADER_BG)
         self.header.grid(row=0)
+
         self.options = Frame(self.header, background=self.COLOUR_HEADER_BG, pady=10)
         self.turn_label = Label(self.options, text=f"{self.turn}'s turn", foreground="#3FFF00", font=("Arial", 12),
                                 background=self.COLOUR_HEADER_BG)
@@ -94,6 +97,11 @@ class Game:
         Label(bot_frame, image=self.bot_img, padx=5, pady=5, borderwidth=10).grid()
 
     def set_playboard(self):
+        # self.test_entry = Entry(self.root, width=20)
+        # self.test_entry.grid(row=2,column=0)
+        # self.test_button = Button(self.root,text="Play AI",command=self.play_bot)
+        # self.test_button.grid(row=2,column=1)
+
         self.playboard = Frame(self.root, pady=10, padx=10, background="white", borderwidth=10)
         self.playboard.grid(row=1)
 
@@ -104,13 +112,13 @@ class Game:
         self.user_box_img = PhotoImage(file='images/user_box.png')
         self.bot_box_img = PhotoImage(file='images/bot_box.png')
 
-        for i in range(0, 17):
-            for j in range(0, 17):
+        for i in range(0, (self.GRID_SIZE * 2) + 1):
+            for j in range(0, (self.GRID_SIZE * 2) + 1):
                 if i % 2 == 0 and j % 2 == 0:  # dots
                     Label(self.playboard, image=self.dot_img, borderwidth=0, background="white").grid(row=i,
                                                                                                     column=j)
                 elif i % 2 == 0 and j % 2 != 0:  # line x
-                    line_x_btn = Button(self.playboard, image=self.blank_img, relief=SUNKEN, borderwidth=0,
+                    line_x_btn = Button(self.playboard, text="X"+str((i,j)), relief=SUNKEN, borderwidth=0,
                                         background="white",
                                         command=lambda x=i, y=j: self.makeLineX(x, y))
                     self.lineX_list.append(Line(i, j, line_x_btn, "x", False))
@@ -119,7 +127,7 @@ class Game:
 
 
                 elif i % 2 != 0 and j % 2 == 0:  # line y
-                    line_y_btn = Button(self.playboard, image=self.blank_img, relief=SUNKEN, borderwidth=0,
+                    line_y_btn = Button(self.playboard, text="Y"+str((i,j)), relief=SUNKEN, borderwidth=0,
                                         background="white",
                                         command=lambda x=i, y=j: self.makeLineY(x, y))
                     self.lineY_list.append(Line(i, j, line_y_btn, "y", False))
@@ -135,8 +143,9 @@ class Game:
     def makeLineX(self, row, column):
         for line in self.lineX_list:
             if line.row == row and line.column == column:
+
                 line.button.configure(image=self.line_x_img, relief=SUNKEN, borderwidth=0, background="white")
-                print(line.orientation, line.row, line.column)
+                print(self.turn,":",line)
                 line.state = True
                 self.active_lineX_list.append(line)
                 if not self.boxCheck():
@@ -146,7 +155,7 @@ class Game:
         for line in self.lineY_list:
             if line.row == row and line.column == column:
                 line.button.configure(image=self.line_y_img, relief=SUNKEN, borderwidth=0, background="white")
-                print(line.orientation, line.row, line.column)
+                print(self.turn,":",line)
                 line.state = True
                 self.active_lineY_list.append(line)
                 if not self.boxCheck():
@@ -212,41 +221,247 @@ class Game:
         elif self.turn == "User":
             self.user_score += 1
             self.label_user_score.configure(text=f'You: {self.user_score}')
+        if self.user_score+self.bot_score == self.GRID_SIZE * self.GRID_SIZE:
+            if self.user_score > self.bot_score:
+                message = "You win!!"
+            else:
+                message = "AI win!!"
+            val = messagebox.askquestion(message,"You want to play again?")
+            print(val)
+            if val == "yes":
+                self.start_game()
+            else:
+                self.root.destroy()
 
-    def play_bot(self):
+    def two_linesX_areOpposite(self, lineX1:Line, lineX2:Line):
+        return lineX1.column == lineX2.column and (lineX1.row - lineX2.row) == -2
+
+    def lineX_perpendicular_to(self, lineY1: Line):
+        r1 = lineY1.row - 1
+        c1 = lineY1.column + 1
+
+        r2 = lineY1.row + 1
+        c2 = lineY1.column + 1
 
         for lineX1 in self.active_lineX_list:
             for lineX2 in self.active_lineX_list:
                 if lineX1 != lineX2:
-                    if lineX1.column == lineX2.column and (
-                            lineX1.row - lineX2.row) == -2:  # check for any two opposite lines
-                        r1 = lineX1.row + 1
-                        c1 = lineX1.column - 1
+                    if not self.lineX_isActive(r2, c2):
+                        if lineX1.row == r1 and lineX1.column == c1:
+                            return Line(r2,c2,None,'x',False)
+                    if not self.lineX_isActive(r1, c1):
+                        if lineX1.row == r2 and lineX1.column == c2:
+                            return Line(r1,c1,None,'x',False)
 
-                        r2 = lineX1.row + 1
-                        c2 = lineX1.column + 1
+    def lineX_isActive(self, row, column):
+        for line in self.lineX_list:
+            if line.row == row and line.column == column:
+                return line.state
+        return False
+    def two_linesY_areOpposite(self, lineY1: Line, lineY2: Line):
+        return lineY1.row == lineY2.row and (lineY1.column - lineY2.column) == -2
 
-                        for lineY1 in self.active_lineY_list:
-                            for lineY2 in self.active_lineY_list:
-                                if lineY1 != lineY2:
-                                        if lineY1.row == r1 and lineY1.column == c1 and lineY2.row != r2 and lineY2.column != c2:
-                                            self.makeLineY(r2, c2)
-                                            return
-                                        elif lineY1.row == r2 and lineY1.column == c2 and lineY2.row != r1 and lineY2.column != c1:
-                                            self.makeLineY(r1, c1)
-                                            return
+    def lineY_perpendicular_to(self, lineX1: Line):
+        r1 = lineX1.row + 1
+        c1 = lineX1.column - 1
 
+        r2 = lineX1.row + 1
+        c2 = lineX1.column + 1
+
+        for lineY1 in self.active_lineY_list:
+            for lineY2 in self.active_lineY_list:
+                if lineY1 != lineY2:
+                    if not self.lineY_isActive(r2, c2):
+                        if lineY1.row == r1 and lineY1.column == c1:
+                            return Line(r2, c2, None, 'y', False)
+                    if not self.lineY_isActive(r1, c1):
+                        if lineY1.row == r2 and lineY1.column == c2:
+                            return Line(r1,c1,None,'y',False)
+
+    def lineY_isActive(self, row, column):
+        for line in self.lineY_list:
+            if line.row == row and line.column == column:
+                return line.state
+        return False
+
+    def two_lineX_arePerpendicularTo(self,lineY1:Line):
+        """returns True if two lines are opposite to each other, and perpendicular to given line"""
+
+        # for left side of line
+        if self.line_left_up_isActive(lineY1) and self.line_left_down_isActive(lineY1):
+            print("Two perpendicular lines are active")
+            return True
+        # for right side of line
+        elif self.line_right_up_isActive(lineY1) and self.line_right_down_isActive(lineY1):
+            print("Two perpendicular lines are active")
+            return True
+        else:
+            return False
+
+    def two_lineY_arePerpendicularTo(self,lineX1:Line):
+        """returns True if two lines are opposite to each other, and perpendicular to given line"""
+        # for upside of line
+        if self.line_left_up_isActive(lineX1) and self.line_right_up_isActive(lineX1):
+            print("Two perpendicular lines are active")
+            return True
+        # for downside of line
+        elif self.line_left_down_isActive(lineX1) and self.line_right_down_isActive(lineX1):
+            print("Two perpendicular lines are active")
+            return True
+        else:
+            return False
+
+    def line_left_up_isActive(self,line):
+        if line.orientation == "x":
+            return self.lineY_isActive(line.row - 1, line.column - 1)
+        elif line.orientation == "y":
+            return self.lineX_isActive(line.row - 1, line.column - 1)
+
+    def line_left_down_isActive(self,line):
+        if line.orientation == "x":
+            return self.lineY_isActive(line.row + 1, line.column - 1)
+        elif line.orientation == "y":
+            return self.lineX_isActive(line.row + 1, line.column - 1)
+
+
+    def line_right_up_isActive(self, line):
+        if line.orientation == "x":
+            return self.lineY_isActive(line.row - 1, line.column + 1)
+        elif line.orientation == "y":
+            return self.lineX_isActive(line.row - 1, line.column + 1)
+
+    def line_right_down_isActive(self, line):
+        if line.orientation == "x":
+            return self.lineY_isActive(line.row + 1, line.column + 1)
+        elif line.orientation == "y":
+            return self.lineX_isActive(line.row + 1, line.column + 1)
+
+    def lineX_up_isActive(self, line):
+
+        return self.lineX_isActive(line.row - 2,line.column)
+
+    def lineX_down_isActive(self, line):
+        return self.lineX_isActive(line.row + 2,line.column)
+
+    def lineY_left_isActive(self, line):
+        return self.lineY_isActive(line.row, line.column - 2)
+
+    def lineY_right_isActive(self, line):
+        return self.lineY_isActive(line.row, line.column + 2)
+
+    def lineX_opposite_and_prep(self,lineX1):
+        if self.lineX_up_isActive(lineX1):
+            if self.line_left_up_isActive(lineX1):
+                print("opposite L active")
+                return True
+            elif self.line_right_up_isActive(lineX1):
+                print("opposite L active")
+                return True
+
+        elif self.lineX_down_isActive(lineX1):
+            if self.line_left_down_isActive(lineX1):
+                print("opposite L active")
+                return True
+            elif self.line_right_down_isActive(lineX1):
+                print("opposite L active")
+                return True
+        else:
+            return False
+
+    def lineY_opposite_and_prep(self,lineY1):
+        if self.lineY_left_isActive(lineY1):
+            if self.line_left_up_isActive(lineY1):
+                print("opposite L active")
+                return True
+            elif self.line_left_down_isActive(lineY1):
+                print("opposite L active")
+                return True
+
+        elif self.lineY_right_isActive(lineY1):
+            if self.line_right_up_isActive(lineY1):
+                print("opposite L active")
+                return True
+            elif self.line_right_down_isActive(lineY1):
+                print("opposite L active")
+                return True
+        else:
+            return False
+
+
+
+
+
+    def play_bot(self):
+        print("play Bot")
+
+        for lineX1 in self.active_lineX_list: # check for line x
+
+            for lineX2 in self.active_lineX_list:
+                if lineX1 != lineX2:
+                    if self.two_linesX_areOpposite(lineX1, lineX2):
+
+                        # check for any two opposite lines
+                        lineY = self.lineY_perpendicular_to(lineX1)
+
+                        if lineY:
+                            self.makeLineY(lineY.row, lineY.column)
+                            return
+
+
+        for lineY1 in self.active_lineY_list:
+            for lineY2 in self.active_lineY_list:
+                if lineY1 != lineY2:
+                    if self.two_linesY_areOpposite(lineY1, lineY2):  # check for any two opposite lines
+                        lineX = self.lineX_perpendicular_to(lineY1)
+
+                        if lineX:
+                            self.makeLineX(lineX.row,lineX.column)
+                            return
+        count = 0
         while True:
-            random_line = random.choice(self.lineX_list + self.lineY_list)
-            if not random_line.state:
-                if random_line.orientation == "x":
-                    self.makeLineX(random_line.row, random_line.column)
-                    return
-                elif random_line.orientation == "y":
-                    self.makeLineY(random_line.row, random_line.column)
-                    return
+                count += 1
+                random_list = [self.lineX_list,self.lineY_list]
+                random_ort = random.randint(0,1)
+                random_line = random.choice(random_list[random_ort])
+                # linestr = self.test_entry.get()
+                # line = linestr.split(" ")
+                #
+                # random_line = Line(int(line[0]),int(line[1]),None,line[2],False)
+                # print(random_line)
 
 
-print(Game())
-print("hi")
+
+
+                if not random_line.state:
+
+                    if random_line.orientation == "x":
+                        if not self.two_lineY_arePerpendicularTo(random_line):
+                            print("X: Not perpendicular to two lines")
+                            if not self.lineX_opposite_and_prep(random_line):
+                                print("X: Not L to an line")
+
+                                self.makeLineX(random_line.row, random_line.column)
+                                return
+
+
+                    elif random_line.orientation == "y":
+                        if not self.two_lineX_arePerpendicularTo(random_line):
+                            print("Y: Not perpendicular to two lines")
+                            if not self.lineY_opposite_and_prep(random_line):
+                                print("Y: Not L to an line")
+                                self.makeLineY(random_line.row, random_line.column)
+
+                                return
+
+                    if count > 2 * len(self.lineX_list):
+                        if random_line.orientation == "x":
+                            self.makeLineX(random_line.row, random_line.column)
+                            return
+                        elif random_line.orientation == "y":
+                            self.makeLineY(random_line.row, random_line.column)
+                            return
+
+
+
+Game(2)
 
